@@ -1,0 +1,53 @@
+from enum import Enum
+
+
+class Solution:
+    class Action(Enum):
+        BUYABLE = "BUYABLE"
+        SELLABLE = "SELLABLE"
+
+        def __repr__(self) -> str:
+            return self.name
+
+        def __str__(self) -> str:
+            return self.name
+
+    def maxProfit(self, prices: List[int]) -> int:
+        # (total, action, cooldown)
+        states = deque([(0, self.Action.BUYABLE, 0)])
+        memo = {}
+
+        for price in prices:
+            n = 1
+            length = len(states)
+
+            while n <= length:
+                n += 1
+
+                total, action, cooldown = states.popleft()
+                current = (total, action, cooldown)
+
+                if current in memo:
+                    states.extend(memo[current])
+                    continue
+
+                next_states = [(total, action, cooldown - 1 if cooldown > 0 else 0)]
+
+                if action == self.Action.BUYABLE and cooldown <= 0:
+                    next_states.append((total - price, self.Action.SELLABLE, 0))
+
+                if action == self.Action.SELLABLE:
+                    next_states.append((total + price, self.Action.BUYABLE, 1))
+
+                expanded_states = []
+
+                for state in next_states:
+                    if state in memo:
+                        expanded_states.extend(memo[state])
+                    else:
+                        expanded_states.append(state)
+
+                states.extend(expanded_states)
+                memo[current] = expanded_states
+
+        return max(total for total, *_ in states)
